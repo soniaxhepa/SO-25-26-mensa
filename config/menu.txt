@@ -1,0 +1,17 @@
+# Primi piatti
+PRIMO pasta_al_pomodoro
+PRIMO riso_alla_milanese
+PRIMO pasta_al_pesto
+PRIMO minestra_di_verdure
+
+# Secondi piatti e contorni
+SECONDO pollo_arrosto
+SECONDO pesce_al_forno
+SECONDO cotoletta_con_insalata
+SECONDO frittata_con_patate
+
+# Caffè
+COFFEE caffe_normale
+COFFEE caffe_macchiato
+COFFEE caffe_decaffeinato
+COFFEE caffe_ginseng

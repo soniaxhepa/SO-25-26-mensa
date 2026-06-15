@@ -1,5 +1,5 @@
-#ifndef STATS.H
-#define STATS.H
+#ifndef STATS_H
+#define STATS_H
 
 #include "common.h"
 #include "config.h"

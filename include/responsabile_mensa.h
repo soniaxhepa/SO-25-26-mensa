@@ -1,5 +1,5 @@
-#ifndef RESPONSABILE_MENSA.H
-#define RESPONSABILE_MENSA.H
+#ifndef RESPONSABILE_MENSA_H
+#define RESPONSABILE_MENSA_H
 
 #include "common.h"
 #include "config.h"

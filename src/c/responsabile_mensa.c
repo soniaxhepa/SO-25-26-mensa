@@ -15,7 +15,6 @@ static void handle_signal(int sig) {
     struct sembuf sops;
 
     (void)sig;
-    printf("\n[RESPONSABILE MENSA] Segnale ricevuto, pulizia IPC...\n");
 
     // Avviso i processi che la simulazione è terminata
     if (g_stats != NULL && g_sem_id != -1) {
@@ -62,12 +61,96 @@ static void handle_signal(int sig) {
         shmdt(g_stats); 
         g_stats = NULL;
     }
-    // Rimozione segmento shm(mem. cond) e set semafori
     if (g_shm_id != -1 && g_sem_id != -1)
         destroy_ipc(g_shm_id, g_sem_id);
-    // Rimozione coda messaggi
     if (g_msg_id != -1)
         msgctl(g_msg_id, IPC_RMID, NULL);
 
-    exit(EXIT_SUCCESS);
+    _exit(EXIT_SUCCESS);
+}
+
+
+// CREO UTENTI
+static int crea_utenti_exec(int n_utenti, const char *config_file, const char *menu_file, int max_group, Stats *stats) {
+    int i, g;
+    pid_t pid;
+
+    int group_id[1024];
+    int group_size_arr[1024];
+    if (n_utenti > 1024) {
+        fprintf(stderr, "[RESPONSABILE MENSA] Troppi utenti (max 1024)\n");
+        return -1;
+    }
+
+
+    // assegno i gruppi a tutti gli utenti prima di fare fork()
+    g = 0;
+    i = 0;
+    while (i < n_utenti) {
+        int size, j;
+
+        if (g >= MAX_GRUPPI_SEM) {
+            size = 1;
+        } else {
+            size = 1 + rand() % max_group;
+            if (i + size > n_utenti)
+                size = n_utenti - i;
+        }
+
+        for (j = 0; j < size; j++) {
+            group_id[i + j]       = g;
+            group_size_arr[i + j] = size;
+        }
+        stats->gruppi_size[g]   = size;
+        stats->gruppi_pronti[g] = 0;
+
+        printf("[RESPONSABILE MENSA] Gruppo %d: utenti %d..%d (size=%d)\n",
+               g, i, i + size - 1, size);
+
+        i += size;
+        g++;
+    }
+    stats->n_gruppi = g;
+    g_n_gruppi      = g;  
+
+
+     // fork()+execve() per ogni utente
+    for (i = 0; i < n_utenti; i++) {
+        switch (pid = fork()) {
+
+            case -1:
+                perror("[RESPONSABILE MENSA] Errore fork utente");
+                return -1;
+
+            case 0: {
+                
+                char idx_str[16], gid_str[16], gsz_str[16];
+                char *args[] = {
+                    "./utente",
+                    idx_str,
+                    (char *)config_file,
+                    (char *)menu_file,
+                    "0",                                    // barriera iniziale
+                    (i >= (n_utenti * 8 / 10)) ? "1" : "0"
+
+                    gid_str,
+                    gsz_str,
+                    NULL
+                };
+                snprintf(idx_str, sizeof(idx_str), "%d", i);
+                snprintf(gid_str, sizeof(gid_str), "%d", group_id[i]);
+                snprintf(gsz_str, sizeof(gsz_str), "%d", group_size_arr[i]);
+
+                execve("./utente", args, NULL);
+                perror("[UTENTE] Errore execve");
+                _exit(EXIT_FAILURE);
+            }
+
+            default:
+                printf("[RESPONSABILE MENSA] Creato utente %d (gruppo=%d, size=%d), PID=%d\n",
+                       i, group_id[i], group_size_arr[i], pid);
+                break;
+        }
+    }
+    return 0;
 }

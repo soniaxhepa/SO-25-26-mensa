@@ -30,6 +30,10 @@
 #define MAX_GRUPPI_SEM 	      32
 #define SEM_GRUPPO_BASE       10
 
+#define TERM_NONE     0
+#define TERM_TIMEOUT  1
+#define TERM_OVERLOAD 2
+
 union semun {
     int              val;
     struct semid_ds *buf;

@@ -27,6 +27,8 @@
 #define SEM_GROUP             8
 #define SEM_TICKET            9
 #define NUM_SEMS              10
+#define MAX_GRUPPI_SEM 	      32
+#define SEM_GRUPPO_BASE       10
 
 union semun {
     int              val;

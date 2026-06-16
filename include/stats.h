@@ -38,6 +38,11 @@ typedef struct {
     int causa_terminazione;
     int giorno_rifornito;
     int n_in_attesa_gruppo;
+
+    int gruppi_size[MAX_GRUPPI_SEM];
+    int gruppi_pronti[MAX_GRUPPI_SEM];
+    int n_gruppi;
+
 } Stats;
 
 void init_stats(Stats *stats);

@@ -24,11 +24,17 @@
 #define SEM_TAVOLI            6
 
 #define SEM_FINE_SIM          7
-#define SEM_GROUP             8
-#define SEM_TICKET            9
+#define SEM_FINE_GIORNATA     8 
+#define SEM_INIZIO_GIORNATA   9 
+#define SEM_TICKET            10
+#define SEM_GRUPPO_BASE       11
+#define MAX_GRUPPI_SEM        32
 #define NUM_SEMS              (SEM_GRUPPO_BASE + MAX_GRUPPI_SEM)
-#define MAX_GRUPPI_SEM 	      32
-#define SEM_GRUPPO_BASE       10
+
+// cause terminazione
+#define TERM_NONE     0
+#define TERM_TIMEOUT  1
+#define TERM_OVERLOAD 2
 
 union semun {
     int              val;

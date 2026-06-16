@@ -1,0 +1,61 @@
+#include "../../include/ipc.h"
+#include "../../include/stats.h"
+#include "../../include/config.h"
+
+// firma del main pk rifornimento è un eseguibile separato lanciato con execve
+int main(int argc, char *argv[]) {
+
+    // controllo argc
+    if (argc < 2) {
+        fprintf(stderr, "Uso: %s <config>\n", argv[0]);
+        return 1;
+    }
+
+    // carica config 
+    Config cfg;
+    if (load_config(argv[1], &cfg) != 0) {
+        fprintf(stderr, "[RIFORNIMENTO] Errore caricamento config\n");
+        return 1;
+    }
+    
+    // aggancia IPC
+    int shm_id = shmget(SHM_KEY, sizeof(Stats), 0666);
+    if (shm_id == -1) { perror("[RIFORNIMENTO] shmget"); return 1; }
+
+    int sem_id = semget(SEM_KEY, 0, 0666);
+    if (sem_id == -1) { perror("[RIFORNIMENTO] semget"); return 1; }
+
+    Stats *stats = (Stats *) shmat(shm_id, NULL, 0);
+    if (stats == (Stats *)-1) { perror("[RIFORNIMENTO] shmat"); return 1; }
+
+    // loop rifornimento (Questo processo deve:
+    //      Aspettare avg_refill_time secondi (simulati)
+    //      Ricaricare le porzioni di primi e secondi fino al massimo
+    //      Ripetere finché la simulazione non è terminata)
+    while (!stats->simulazione_terminata) {
+    sleep(cfg.avg_refill_time);
+    
+    if (stats->simulazione_terminata) break;
+    
+    sem_p(sem_id, SEM_MUTEX_STATS);
+    
+    // ricarica primi
+    int i;
+    for (i = 0; i < MAX_MENU_ITEMS; i++) {
+        if (stats->porzioni_primi[i] < cfg.max_porzioni_primi)
+            stats->porzioni_primi[i] = cfg.max_porzioni_primi;
+        }
+    // ricarica secondi
+    for (i = 0; i < MAX_MENU_ITEMS; i++) {
+        if (stats->porzioni_secondi[i] < cfg.max_porzioni_secondi)
+            stats->porzioni_secondi[i] = cfg.max_porzioni_secondi;
+        }
+    
+    sem_v(sem_id, SEM_MUTEX_STATS);
+    printf("[RIFORNIMENTO] Porzioni ricaricate\n");
+    }
+
+    shmdt(stats);
+    return 0;
+
+}

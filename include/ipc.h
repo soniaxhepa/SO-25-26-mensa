@@ -26,7 +26,7 @@
 #define SEM_FINE_SIM          7
 #define SEM_GROUP             8
 #define SEM_TICKET            9
-#define NUM_SEMS              10
+#define NUM_SEMS              (SEM_GRUPPO_BASE + MAX_GRUPPI_SEM)
 #define MAX_GRUPPI_SEM 	      32
 #define SEM_GRUPPO_BASE       10
 

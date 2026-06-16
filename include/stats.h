@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "config.h"
+#include "ipc.h"
 
 typedef struct {
     int utenti_serviti_totali;

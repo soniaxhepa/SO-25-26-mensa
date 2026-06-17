@@ -1,4 +1,3 @@
-
  // communication_disorder.c
  
 #include "common.h"
@@ -7,9 +6,9 @@
 #include "stats.h"
 
 int main(int argc, char *argv[]) {
-    Config  cfg;
-    Stats  *stats;
-    int     shm_id, sem_id, i;
+    Config cfg;
+    Stats *stats;
+    int shm_id, sem_id, i;
     struct sembuf sops;
 
     if (argc < 3) {
@@ -24,10 +23,14 @@ int main(int argc, char *argv[]) {
 
     // Aggancio shared memory e semafori già creati dal responsabile 
     shm_id = shmget(SHM_KEY, sizeof(Stats), 0);
-    if (shm_id == -1) { perror("[COMM_DISORDER] shmget"); return 1; }
+    if (shm_id == -1) { 
+        perror("[COMM_DISORDER] shmget"); return 1; 
+    }
 
     stats = shmat(shm_id, NULL, 0);
-    if (stats == (void *)-1) { perror("[COMM_DISORDER] shmat"); return 1; }
+    if (stats == (void *)-1) { 
+        perror("[COMM_DISORDER] shmat"); return 1; 
+    }
 
     sem_id = semget(SEM_KEY, NUM_SEMS, 0);
     if (sem_id == -1) { perror("[COMM_DISORDER] semget"); shmdt(stats); return 1; }
@@ -50,9 +53,11 @@ int main(int argc, char *argv[]) {
     sem_p(sem_id, SEM_MUTEX_STATS);
     i = stats->simulazione_terminata;
     sem_v(sem_id, SEM_MUTEX_STATS);
-    if (i) { shmdt(stats); return 0; }
+    if (i) { 
+        shmdt(stats); return 0; 
+    }
 
-    // Blocc la cassa occupando tutti i posti 
+    // Blocco la cassa occupando tutti i posti 
     printf("[COMM_DISORDER] Blocco cassa per %d secondi\n", cfg.stop_duration);
     for (i = 0; i < cfg.nof_wk_seats_cassa; i++)
         sem_p(sem_id, SEM_STAZIONE_CASSA);

@@ -44,6 +44,10 @@ typedef struct {
     int gruppi_pronti[MAX_GRUPPI_SEM];
     int n_gruppi;
 
+    int num_giorno;
+    int snapshot_utenti_serviti;
+    int snapshot_piatti_totali;
+
 } Stats;
 
 void init_stats(Stats *stats);
@@ -51,5 +55,9 @@ void init_stats(Stats *stats);
 void print_stats(const Stats *stats);
 
 void salva_stats_csv(const Stats *stats, const char *filename);
+
+void scatta_snapshot(Stats *stats);
+
+void print_stats_giornata(Stats *stats, int giorno);
 
 #endif

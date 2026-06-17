@@ -74,3 +74,20 @@ void salva_stats_csv(const Stats *stats, const char *filename) {
     fclose(f);
     printf("[STATS] Statistiche salvate in %s\n", filename);
 }
+
+void scatta_snapshot(Stats *stats) {
+    if (stats == NULL) return;
+    stats->snapshot_utenti_serviti = stats->utenti_serviti_totali;
+    stats->snapshot_piatti_totali  = stats->piatti_primi_totali
+                                   + stats->piatti_secondi_totali
+                                   + stats->piatti_coffee_totali;
+}
+
+void print_stats_giornata(Stats *stats, int giorno) {
+    if (stats == NULL) return;
+    printf("[GIORNO %d] Utenti serviti oggi: %d | Piatti erogati oggi: %d\n",
+        giorno,
+        stats->utenti_serviti_totali  - stats->snapshot_utenti_serviti,
+        (stats->piatti_primi_totali + stats->piatti_secondi_totali + stats->piatti_coffee_totali)
+            - stats->snapshot_piatti_totali);
+}

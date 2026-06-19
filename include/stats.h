@@ -6,6 +6,7 @@
 #include "ipc.h"
 
 typedef struct {
+
     int utenti_serviti_totali;
     int utenti_non_serviti_totali;
 
@@ -31,6 +32,7 @@ typedef struct {
     long attesa_totale_complessiva;
 
     int operatori_attivi_totali;
+    int operatori_attivi_per_stazione[4];
     int pause_totali;
 
  

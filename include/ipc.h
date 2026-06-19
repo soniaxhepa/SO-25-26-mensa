@@ -36,12 +36,6 @@
 #define TERM_TIMEOUT  1
 #define TERM_OVERLOAD 2
 
-union semun {
-    int              val;
-    struct semid_ds *buf;
-    unsigned short  *array;
-};
-
 struct message_t {
     long mtype;
     char mtext[MSG_LEN];
@@ -54,5 +48,16 @@ int destroy_ipc(int shm_id, int sem_id);
 
 void sem_p(int sem_id, int sem_num);
 void sem_v(int sem_id, int sem_num);
+
+typedef struct {
+    pid_t pid;
+    int   piatto;
+    int   prezzo_cent;
+} ReqPayload;
+
+typedef struct {
+    int servito;
+    int prezzo_cent;
+} ResPayload;
 
 #endif

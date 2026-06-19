@@ -41,6 +41,7 @@ typedef struct {
         int stop_duration;
         int n_new_users;
         int max_users_per_group;
+	int minuti_giornata; 
 } Config;
 
 int load_config(const char *filename, Config *cfg);

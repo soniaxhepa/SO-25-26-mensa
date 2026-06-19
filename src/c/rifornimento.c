@@ -33,7 +33,10 @@ int main(int argc, char *argv[]) {
     //      Ricaricare le porzioni di primi e secondi fino al massimo
     //      Ripetere finché la simulazione non è terminata)
     while (!stats->simulazione_terminata) {
-    sleep(cfg.avg_refill_time);
+    struct timespec ts;
+    ts.tv_sec  = (cfg.avg_refill_time * cfg.n_nano_secs) / 1000000000;
+    ts.tv_nsec = (cfg.avg_refill_time * cfg.n_nano_secs) % 1000000000;
+    nanosleep(&ts, NULL);
     
     if (stats->simulazione_terminata) break;
     

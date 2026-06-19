@@ -36,6 +36,17 @@
 #define TERM_TIMEOUT  1
 #define TERM_OVERLOAD 2
 
+/* -------- Union semun -------- */
+/* Su macOS sys/sem.h la definisce già; su Linux no */
+#ifndef __APPLE__
+union semun {
+    int              val;
+    struct semid_ds *buf;
+    unsigned short  *array;
+};
+#endif
+
+
 struct message_t {
     long mtype;
     char mtext[MSG_LEN];

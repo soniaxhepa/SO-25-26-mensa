@@ -47,6 +47,8 @@ int load_config(const char *filename, Config *cfg){
         else if (strcmp(key, "N_NEW_USERS") == 0) cfg->n_new_users = value;
         else if (strcmp(key, "MAX_USERS_PER_GROUP") == 0) cfg->max_users_per_group = value;
         else if (strcmp(key, "AVG_REFILL_TIME") == 0) cfg->avg_refill_time = value;
+	else if (strcmp(key, "MINUTI_GIORNATA") == 0) cfg->minuti_giornata = value;
+
     }
 
     // aggiungo questo if perchè se dopo aver letto tuttoil file avg_refill_time è ancora 0, 

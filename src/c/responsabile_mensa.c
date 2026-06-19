@@ -1,12 +1,15 @@
 // Processo principale che avvia la simulazione
 #include "responsabile_mensa.h"
 
-static int    g_shm_id      = -1;
-static int    g_sem_id      = -1;
-static int    g_msg_id      = -1;
-static Stats *g_stats       = NULL;
-static int    g_nof_workers = 0;
-static int    g_n_gruppi    = 0;
+static int    g_shm_id         = -1;
+static int    g_sem_id         = -1;
+static int    g_msg_id         = -1;
+static Stats *g_stats          = NULL;
+static int    g_nof_workers    = 0;
+static int    g_n_gruppi       = 0;
+static int    g_n_utenti       = 0;
+static pid_t  g_pids_utenti[1024];
+static pid_t  g_pids_operatori[64];
 
 // handle signal: gestisce i segnali SIGINT e SIGTERM
 static void handle_signal(int sig) {
@@ -21,6 +24,7 @@ static void handle_signal(int sig) {
         sops.sem_op  = -1;
         if (semop(g_sem_id, &sops, 1) != -1) {
             g_stats->simulazione_terminata = 1;
+            g_stats->fine_giornata         = 1;
             sops.sem_op = 1;
             semop(g_sem_id, &sops, 1);
         }
@@ -43,6 +47,10 @@ static void handle_signal(int sig) {
             }
         }
     }
+
+    // Mando SIGUSR2 a tutti i figli per svegliarli da semop/msgrcv bloccanti
+    for (k = 0; k < g_n_utenti;   k++) kill(g_pids_utenti[k],   SIGUSR2);
+    for (k = 0; k < g_nof_workers; k++) kill(g_pids_operatori[k], SIGUSR2);
 
     // Sblocco eventuali operatori bloccati
     if (g_sem_id != -1 && g_nof_workers > 0) {
@@ -103,6 +111,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
     }
     stats->n_gruppi = g;
     g_n_gruppi      = g;
+    g_n_utenti      = n_utenti;
 
     // fork() + execve() per ogni utente
     for (i = 0; i < n_utenti; i++) {
@@ -131,6 +140,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
                 _exit(EXIT_FAILURE);
             }
             default:
+                g_pids_utenti[i] = pid;
                 break;
         }
     }
@@ -186,6 +196,7 @@ static int crea_operatori_exec(int n_operatori, const char *config_file, const c
                 _exit(EXIT_FAILURE);
             }
             default:
+                g_pids_operatori[i] = pid;
                 break;
         }
     }
@@ -314,6 +325,12 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         }
         if (sigaction(SIGTERM, &sa, NULL) == -1) {
             perror("[RESPONSABILE MENSA] Errore sigaction SIGTERM");
+            return -1;
+        }
+        // SIGUSR2 ignorato dal responsabile: lo mandiamo noi ai figli, non vogliamo riceverlo
+        sa.sa_handler = SIG_IGN;
+        if (sigaction(SIGUSR2, &sa, NULL) == -1) {
+            perror("[RESPONSABILE MENSA] Errore sigaction SIGUSR2");
             return -1;
         }
     }
@@ -483,6 +500,7 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     for (giorno = 1; giorno <= cfg.sim_duration; giorno++) {
         struct sembuf s;
         union semun   r;
+        int k;
 
         // Controllo overload: se qualcuno ha già impostato terminata, usciamo
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
@@ -497,7 +515,9 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
         s.sem_op  = -1; semop(sem_id, &s, 1);
         scatta_snapshot(stats);  // da implementare
-        stats->num_giorno = giorno;
+        stats->num_giorno    = giorno;
+        //reset flag di fine giornata per il nuovo giorno
+        stats->fine_giornata = 0;
         s.sem_op =  1; semop(sem_id, &s, 1);
 
         // Sblocco utenti a inizio giornata
@@ -508,7 +528,18 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
                 semop(sem_id, &sv, 1);
         }
 
-        sleep(1);   // una giornata simulata
+        struct timespec ts;
+        ts.tv_sec  =  0;
+        ts.tv_nsec = (long)cfg.minuti_giornata * cfg.n_nano_secs;
+        nanosleep(&ts, NULL);
+
+        // Setto fine_giornata e mando SIGUSR2 ai figli per svegliarli da chiamate bloccanti
+        s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
+        s.sem_op  = -1; semop(sem_id, &s, 1);
+        stats->fine_giornata = 1;
+        s.sem_op  =  1; semop(sem_id, &s, 1);
+        for (k = 0; k < g_n_utenti;    k++) kill(g_pids_utenti[k],    SIGUSR2);
+        for (k = 0; k < g_nof_workers; k++) kill(g_pids_operatori[k], SIGUSR2);
 
         // fine giornata: sblocco utenti bloccati alla barriera di gruppo
         sblocca_gruppi_incompleti(sem_id, stats);

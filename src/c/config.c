@@ -55,6 +55,7 @@ int load_config(const char *filename, Config *cfg){
     // lo imposto a 10 come valore di default, ciò evita che rifornimento usi un tempo di 0
     // min e faccia un loop infinito, occupando tutta la CPU.
     if (cfg->avg_refill_time == 0) cfg->avg_refill_time = 10;
+    if (cfg->minuti_giornata == 0) cfg->minuti_giornata = 480;
 fclose(fp);
 return 0;
 }

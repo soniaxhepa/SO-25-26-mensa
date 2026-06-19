@@ -35,7 +35,15 @@ int main(int argc, char *argv[]) {
     msg.mtype = MSG_TYPE_OPERATOR_READY;
     msgsnd(msg_id, &msg, 0, 0);
 
-    sem_p(sem_id, SEM_INIZIO_GIORNATA);
+    {
+    struct sembuf s;
+    s.sem_num = SEM_MUTEX_SYNC; s.sem_flg = 0;
+    s.sem_op  = -1;
+    semop(sem_id, &s, 1);
+    s.sem_op  =  0;
+    semop(sem_id, &s, 1);
+    }
+
     if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
     else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
     else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
@@ -46,6 +54,12 @@ int main(int argc, char *argv[]) {
     else if (strcmp(stazione, "SECONDI") == 0) staz_idx = 1;
     else if (strcmp(stazione, "COFFEE") == 0)  staz_idx = 2;
     else                                        staz_idx = 3;
+
+    int sem_staz;
+    if (strcmp(stazione, "PRIMI") == 0)        sem_staz = SEM_STAZIONE_PRIMI;
+    else if (strcmp(stazione, "SECONDI") == 0) sem_staz = SEM_STAZIONE_SECONDI;
+    else if (strcmp(stazione, "COFFEE") == 0)  sem_staz = SEM_STAZIONE_COFFEE;
+    else                                        sem_staz = SEM_STAZIONE_CASSA;
 
     /* registra operatore come attivo */
     sem_p(sem_id, SEM_MUTEX_STATS);
@@ -63,9 +77,13 @@ int main(int argc, char *argv[]) {
         else if (strcmp(stazione, "COFFEE") == 0)  tipo_richiesta = 4;
         else                                       tipo_richiesta = 5;
     
-        if (msgrcv(msg_id, &msg, MSG_LEN, tipo_richiesta, 0) == -1) {
-            if (errno == EINTR) continue;
-            break;
+        if (msgrcv(msg_id, &msg, MSG_LEN, tipo_richiesta, IPC_NOWAIT) == -1) {
+        if (errno == ENOMSG) {
+            struct timespec ts = {0, 10000000L};
+            nanosleep(&ts, NULL);
+            continue;
+            }
+        break;
         }
     
         int tempo_servizio;
@@ -115,8 +133,8 @@ int main(int argc, char *argv[]) {
         
                 /* pausa */
                 struct timespec tp;
-                tp.tv_sec  = (cfg.avg_srvc_primi * cfg.n_nano_secs) / 1000000000;
-                tp.tv_nsec = (cfg.avg_srvc_primi * cfg.n_nano_secs) % 1000000000;
+                tp.tv_sec  = ((long)cfg.nof_pause * cfg.n_nano_secs) / 1000000000L;
+                tp.tv_nsec = ((long)cfg.nof_pause * cfg.n_nano_secs) % 1000000000L;
                 nanosleep(&tp, NULL);
         
                 /* riprende postazione */
@@ -133,9 +151,11 @@ int main(int argc, char *argv[]) {
                 }
         
         }
-                
+    
+    sem_v(sem_id, sem_staz);
+    sem_p(sem_id, SEM_FINE_SIM);
+
     shmdt(stats);
     return 0;
                 
 }       
-

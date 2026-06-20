@@ -530,8 +530,9 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         }
 
         struct timespec ts;
-        ts.tv_sec  =  0;
-        ts.tv_nsec = (long)cfg.minuti_giornata * cfg.n_nano_secs;
+        long ns_totali = (long)cfg.minuti_giornata * cfg.n_nano_secs;
+        ts.tv_sec  = ns_totali / 1000000000L;
+        ts.tv_nsec = ns_totali % 1000000000L;
         nanosleep(&ts, NULL);
 
         // Setto fine_giornata e mando SIGUSR2 ai figli per svegliarli da chiamate bloccanti

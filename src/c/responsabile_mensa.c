@@ -1,5 +1,6 @@
 // Processo principale che avvia la simulazione
 #include "responsabile_mensa.h"
+#include <signal.h>
 
 static int    g_shm_id         = -1;
 static int    g_sem_id         = -1;

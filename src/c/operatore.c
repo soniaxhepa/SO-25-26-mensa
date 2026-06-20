@@ -35,6 +35,17 @@ int main(int argc, char *argv[]) {
     msg.mtype = MSG_TYPE_OPERATOR_READY;
     msgsnd(msg_id, &msg, 0, 0);
 
+    {
+    struct sembuf s;
+    s.sem_num = SEM_MUTEX_SYNC; s.sem_flg = 0;
+    s.sem_op  = -1;
+    semop(sem_id, &s, 1);
+    s.sem_op  =  0;
+    semop(sem_id, &s, 1);
+    }
+
+    printf("[OPERATORE %s] passata barriera\n", stazione);
+
     if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
     else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
     else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
@@ -134,6 +145,8 @@ int main(int argc, char *argv[]) {
                 else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
                 else                                        sem_p(sem_id, SEM_STAZIONE_CASSA);
                 
+                printf("[OPERATORE %s] acquisita stazione\n", stazione);
+
                 sem_p(sem_id, SEM_MUTEX_STATS);
                 stats->operatori_attivi_per_stazione[staz_idx]++;  
                 stats->pause_totali++;
@@ -149,4 +162,4 @@ int main(int argc, char *argv[]) {
     shmdt(stats);
     return 0;
                 
-}       
+}          

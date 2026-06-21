@@ -60,12 +60,21 @@ int main(int argc, char *argv[]) {
     stats->operatori_attivi_totali++;
     sem_v(sem_id, SEM_MUTEX_STATS);
 
+    int pause_oggi = 0;
+    int era_fine_giornata = 0;
+
     while (!stats->simulazione_terminata){
-        if (stats->fine_giornata) { 
+        if (stats->fine_giornata) {
+            era_fine_giornata = 1;          /* <-- aggiungi questa riga */
             struct timespec ts = {0, 10000000L};
             nanosleep(&ts, NULL);
             continue;
-        }   
+        }
+        /* nuovo giorno: resetta contatore pause */
+        if (era_fine_giornata) {
+            pause_oggi = 0;
+            era_fine_giornata = 0;
+        }  
         struct message_t msg;
         struct message_t risposta;
     
@@ -123,7 +132,7 @@ int main(int argc, char *argv[]) {
                 }
         sem_v(sem_id, SEM_MUTEX_STATS);
         
-        if (posso_pausare) {
+        if (posso_pausare && pause_oggi < cfg.nof_pause) {
             /* libera postazione */
                 if (strcmp(stazione, "PRIMI") == 0)        sem_v(sem_id, SEM_STAZIONE_PRIMI);
                 else if (strcmp(stazione, "SECONDI") == 0) sem_v(sem_id, SEM_STAZIONE_SECONDI);
@@ -147,6 +156,7 @@ int main(int argc, char *argv[]) {
                 sem_p(sem_id, SEM_MUTEX_STATS);
                 stats->operatori_attivi_per_stazione[staz_idx]++;  
                 stats->pause_totali++;
+                pause_oggi++;
                 sem_v(sem_id, SEM_MUTEX_STATS);
         
                 }

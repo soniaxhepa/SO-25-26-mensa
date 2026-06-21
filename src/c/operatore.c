@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
 
     int pause_oggi = 0;
     int era_fine_giornata = 0;
+    int clienti_serviti = 0;
 
     while (!stats->simulazione_terminata){
         if (stats->fine_giornata) {
@@ -122,46 +123,45 @@ int main(int argc, char *argv[]) {
         memcpy(risposta.mtext, &res, sizeof(ResPayload));
         msgsnd(msg_id, &risposta, MSG_LEN, 0);
 
+        clienti_serviti++;
+
 
         /* logica pausa */
         int posso_pausare = 0;
-        sem_p(sem_id, SEM_MUTEX_STATS);
-        if (stats->operatori_attivi_per_stazione[staz_idx] > 1) {  
-                stats->operatori_attivi_per_stazione[staz_idx]--;  
+        if (clienti_serviti % 5 == 0 && pause_oggi < cfg.nof_pause) {
+            sem_p(sem_id, SEM_MUTEX_STATS);
+            if (stats->operatori_attivi_per_stazione[staz_idx] > 1) {
+                stats->operatori_attivi_per_stazione[staz_idx]--;
                 posso_pausare = 1;
-                }
-        sem_v(sem_id, SEM_MUTEX_STATS);
-        
-        if (posso_pausare && pause_oggi < cfg.nof_pause) {
-            /* libera postazione */
-                if (strcmp(stazione, "PRIMI") == 0)        sem_v(sem_id, SEM_STAZIONE_PRIMI);
-                else if (strcmp(stazione, "SECONDI") == 0) sem_v(sem_id, SEM_STAZIONE_SECONDI);
-                else if (strcmp(stazione, "COFFEE") == 0)  sem_v(sem_id, SEM_STAZIONE_COFFEE);
-                else                                        sem_v(sem_id, SEM_STAZIONE_CASSA);
-        
-                /* pausa */
-                struct timespec tp;
-                tp.tv_sec  = ((long)cfg.nof_pause * cfg.n_nano_secs) / 1000000000L;
-                tp.tv_nsec = ((long)cfg.nof_pause * cfg.n_nano_secs) % 1000000000L;
-                nanosleep(&tp, NULL);
-        
-                /* riprende postazione */
-                if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
-                else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
-                else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
-                else                                        sem_p(sem_id, SEM_STAZIONE_CASSA);
-                
-                printf("[OPERATORE %s] acquisita stazione\n", stazione);
-
-                sem_p(sem_id, SEM_MUTEX_STATS);
-                stats->operatori_attivi_per_stazione[staz_idx]++;  
-                stats->pause_totali++;
-                pause_oggi++;
-                sem_v(sem_id, SEM_MUTEX_STATS);
-        
-                }
-        
+            }
+            sem_v(sem_id, SEM_MUTEX_STATS);
         }
+
+        if (posso_pausare) {
+            if (strcmp(stazione, "PRIMI") == 0)        sem_v(sem_id, SEM_STAZIONE_PRIMI);
+            else if (strcmp(stazione, "SECONDI") == 0) sem_v(sem_id, SEM_STAZIONE_SECONDI);
+            else if (strcmp(stazione, "COFFEE") == 0)  sem_v(sem_id, SEM_STAZIONE_COFFEE);
+            else                                        sem_v(sem_id, SEM_STAZIONE_CASSA);
+
+            struct timespec tp;
+            tp.tv_sec  = ((long)cfg.nof_pause * cfg.n_nano_secs) / 1000000000L;
+            tp.tv_nsec = ((long)cfg.nof_pause * cfg.n_nano_secs) % 1000000000L;
+            nanosleep(&tp, NULL);
+
+            if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
+            else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
+            else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
+            else                                        sem_p(sem_id, SEM_STAZIONE_CASSA);
+
+            printf("[OPERATORE %s] acquisita stazione\n", stazione);
+            sem_p(sem_id, SEM_MUTEX_STATS);
+            stats->operatori_attivi_per_stazione[staz_idx]++;
+            stats->pause_totali++;
+            pause_oggi++;
+            sem_v(sem_id, SEM_MUTEX_STATS);
+        }   
+        
+    }
     
     sem_p(sem_id, SEM_FINE_SIM);
 

@@ -70,6 +70,11 @@ int main(int argc, char *argv[]) {
     sem_v(sem_id, SEM_MUTEX_STATS);
 
     while (!stats->simulazione_terminata){
+        if (stats->fine_giornata) { // ----------
+            struct timespec ts = {0, 10000000L};
+            nanosleep(&ts, NULL);
+            continue;
+        }   
         struct message_t msg;
         struct message_t risposta;
     

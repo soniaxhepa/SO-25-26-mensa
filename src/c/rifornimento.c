@@ -43,7 +43,12 @@ int main(int argc, char *argv[]) {
     struct timespec ts;
     ts.tv_sec  = ((long)effettivo * cfg.n_nano_secs) / 1000000000L;
     ts.tv_nsec = ((long)effettivo * cfg.n_nano_secs) % 1000000000L;
-    nanosleep(&ts, NULL);
+    
+    //nanosleep(&ts, NULL); anzichè questo 
+    if (nanosleep(&ts, NULL) == -1 && errno == EINTR) {
+        if (stats->simulazione_terminata) break;
+        continue;
+    }
     
     if (stats->simulazione_terminata) break;
     

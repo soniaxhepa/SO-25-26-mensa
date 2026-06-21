@@ -49,9 +49,6 @@ static void handle_signal(int sig) {
         }
     }
 
-    // Mando SIGUSR2 a tutti i figli per svegliarli da semop/msgrcv bloccanti
-    for (k = 0; k < g_n_utenti;   k++) kill(g_pids_utenti[k],   SIGUSR2);
-    for (k = 0; k < g_nof_workers; k++) kill(g_pids_operatori[k], SIGUSR2);
 
     // Sblocco eventuali operatori bloccati
     if (g_sem_id != -1 && g_nof_workers > 0) {

@@ -112,7 +112,8 @@ int main(int argc, char *argv[]) {
         risposta.mtype = (long)req.pid;
         memcpy(risposta.mtext, &res, sizeof(ResPayload));
         msgsnd(msg_id, &risposta, MSG_LEN, 0);
-        
+
+
         /* logica pausa */
         int posso_pausare = 0;
         sem_p(sem_id, SEM_MUTEX_STATS);

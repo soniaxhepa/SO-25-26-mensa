@@ -530,16 +530,6 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         stats->fine_giornata = 0;
         s.sem_op =  1; semop(sem_id, &s, 1);
 
-        // Reset porzioni a inizio giornata 
-        {
-            int p;
-            sem_p(sem_id, SEM_MUTEX_STATS);
-            for (p = 0; p < n_primi_menu; p++)
-                stats->porzioni_primi[p] = cfg.avg_refill_primi;
-            for (p = 0; p < n_secondi_menu; p++)
-                stats->porzioni_secondi[p] = cfg.avg_refill_secondi;
-            sem_v(sem_id, SEM_MUTEX_STATS);
-        }
 
         // Sblocco utenti a inizio giornata
         {
@@ -615,6 +605,17 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         for (j = 0; j < n_secondi_menu; j++)
             stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
         s.sem_op = 1; semop(sem_id, &s, 1);
+    }
+
+    // Reset porzioni a per il girono successivo 
+    {
+        int p;
+        sem_p(sem_id, SEM_MUTEX_STATS);
+        for (p = 0; p < n_primi_menu; p++)
+            stats->porzioni_primi[p] = cfg.avg_refill_primi;
+        for (p = 0; p < n_secondi_menu; p++)
+            stats->porzioni_secondi[p] = cfg.avg_refill_secondi;
+        sem_v(sem_id, SEM_MUTEX_STATS);
     }
 
     // Stampa report finale e salva statistiche su CSV

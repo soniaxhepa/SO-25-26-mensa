@@ -46,10 +46,6 @@ int main(int argc, char *argv[]) {
 
     printf("[OPERATORE %s] passata barriera\n", stazione);
 
-    if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
-    else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
-    else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
-    else                                        sem_p(sem_id, SEM_STAZIONE_CASSA);
 
     int staz_idx;
     if (strcmp(stazione, "PRIMI") == 0)        staz_idx = 0;
@@ -57,11 +53,6 @@ int main(int argc, char *argv[]) {
     else if (strcmp(stazione, "COFFEE") == 0)  staz_idx = 2;
     else                                        staz_idx = 3;
 
-    int sem_staz;
-    if (strcmp(stazione, "PRIMI") == 0)        sem_staz = SEM_STAZIONE_PRIMI;
-    else if (strcmp(stazione, "SECONDI") == 0) sem_staz = SEM_STAZIONE_SECONDI;
-    else if (strcmp(stazione, "COFFEE") == 0)  sem_staz = SEM_STAZIONE_COFFEE;
-    else                                        sem_staz = SEM_STAZIONE_CASSA;
 
     /* registra operatore come attivo */
     sem_p(sem_id, SEM_MUTEX_STATS);
@@ -161,7 +152,6 @@ int main(int argc, char *argv[]) {
         
         }
     
-    sem_v(sem_id, sem_staz);
     sem_p(sem_id, SEM_FINE_SIM);
 
     shmdt(stats);

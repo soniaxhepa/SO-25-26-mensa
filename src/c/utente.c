@@ -29,7 +29,7 @@ static int sem_p_giornata(int sem_id, int sem_num, Stats *stats, int giorno) {
         sem_p(sem_id, SEM_MUTEX_STATS);
         int ng = stats->num_giorno;
         sem_v(sem_id, SEM_MUTEX_STATS);
-        if (ng > giorno) return 1;
+        if (ng > giorno || stats->fine_giornata) return 1;
         nanosleep(&attesa, NULL);
     }
     return 0;
@@ -133,7 +133,12 @@ static int invia_e_attendi(int msg_id, Stats *stats,
             return 0;
         }
         if (errno != ENOMSG) { perror("[UTENTE] msgrcv"); return -1; }
-        if (stats->simulazione_terminata) return 1;
+        //if (stats->simulazione_terminata) return 1;
+        if (stats->simulazione_terminata || stats->fine_giornata) {
+            struct message_t tmp;
+            while (msgrcv(msg_id, &tmp, MSG_LEN, (long)req->pid, IPC_NOWAIT) != -1) {}
+            return 1;
+}
         nanosleep(&attesa, NULL);
     }
 }

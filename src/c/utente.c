@@ -2,11 +2,7 @@
 #include "../../include/stats.h"
 #include "../../include/config.h"
 
-/* Tipi messaggio richiesta verso gli operatori */
-#define MSG_REQ_PRIMI    2
-#define MSG_REQ_SECONDI  3
-#define MSG_REQ_COFFEE   4
-#define MSG_REQ_CASSA    5
+
 
 typedef struct {
     char nome[MAX_NAME_LEN];

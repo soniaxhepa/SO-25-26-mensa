@@ -11,6 +11,11 @@
 #define MSG_LEN 120
 #define MSG_TYPE_OPERATOR_READY 1
 
+#define MSG_REQ_PRIMI    2
+#define MSG_REQ_SECONDI  3
+#define MSG_REQ_COFFEE   4
+#define MSG_REQ_CASSA    5
+
 #define SHM_KEY 2401
 #define SEM_KEY 1967
 #define MSG_KEY 7706

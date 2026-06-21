@@ -70,7 +70,7 @@ int main(int argc, char *argv[]) {
     sem_v(sem_id, SEM_MUTEX_STATS);
 
     while (!stats->simulazione_terminata){
-        if (stats->fine_giornata) { // ----------
+        if (stats->fine_giornata) { 
             struct timespec ts = {0, 10000000L};
             nanosleep(&ts, NULL);
             continue;
@@ -78,12 +78,12 @@ int main(int argc, char *argv[]) {
         struct message_t msg;
         struct message_t risposta;
     
-        long tipo_richiesta;        // è tipo un filtro, su quali richieste può accettare in bas$
-        if (strcmp(stazione, "PRIMI") == 0)        tipo_richiesta = 2;
-        else if (strcmp(stazione, "SECONDI") == 0) tipo_richiesta = 3;
-        else if (strcmp(stazione, "COFFEE") == 0)  tipo_richiesta = 4;
-        else                                       tipo_richiesta = 5;
-    
+        long tipo_richiesta;
+        if (strcmp(stazione, "PRIMI") == 0)        tipo_richiesta = MSG_REQ_PRIMI;
+        else if (strcmp(stazione, "SECONDI") == 0) tipo_richiesta = MSG_REQ_SECONDI;
+        else if (strcmp(stazione, "COFFEE") == 0)  tipo_richiesta = MSG_REQ_COFFEE;
+        else                                       tipo_richiesta = MSG_REQ_CASSA;
+
         if (msgrcv(msg_id, &msg, MSG_LEN, tipo_richiesta, IPC_NOWAIT) == -1) {
         if (errno == ENOMSG) {
             struct timespec ts = {0, 10000000L};

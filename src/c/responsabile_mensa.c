@@ -494,7 +494,6 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     for (giorno = 1; giorno <= cfg.sim_duration; giorno++) {
         struct sembuf s;
         union semun   r;
-        int k;
 
         // Controllo overload: se qualcuno ha già impostato terminata, usciamo
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
@@ -549,7 +548,8 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         semctl(sem_id, SEM_FINE_GIORNATA, SETVAL, r);
 
         printf("\n========== STATISTICHE FINE GIORNATA %d ==========\n", giorno);
-        print_stats_giornata(stats, giorno);  // da implementare
+        print_stats_giornata(stats, giorno);  
+        printf("==================================================\n\n");
         
 
     }  // fine loop giornate

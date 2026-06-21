@@ -22,7 +22,7 @@ void print_stats(const Stats *stats) {
     printf("\n--- PIATTI AVANZATI ---\n");
     printf("Avanzi primi:   %d\n", stats->avanzi_primi_totali);
     printf("Avanzi secondi: %d\n", stats->avanzi_secondi_totali);
-    printf("Avanzi coffee:  %d\n", stats->avanzi_coffee_totali);
+    printf("Avanzi coffee:  illimitati/non conteggiati\n");
 
     printf("\n--- TEMPI DI ATTESA (secondi) ---\n");
     printf("Attesa primi:        %ld\n", stats->attesa_totale_primi);

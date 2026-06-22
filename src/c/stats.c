@@ -93,9 +93,24 @@ void scatta_snapshot(Stats *stats) {
 
 void print_stats_giornata(Stats *stats, int giorno) {
     if (stats == NULL) return;
-    printf("[GIORNO %d] Utenti serviti oggi: %d | Piatti erogati oggi: %d\n",
-        giorno,
-        stats->utenti_serviti_totali  - stats->snapshot_utenti_serviti,
-        (stats->piatti_primi_totali + stats->piatti_secondi_totali + stats->piatti_coffee_totali)
-            - stats->snapshot_piatti_totali);
+
+    int serviti_oggi     = stats->utenti_serviti_totali     - stats->snapshot_utenti_serviti;
+    int non_serviti_oggi = stats->utenti_non_serviti_totali - stats->snapshot_utenti_non_serviti;
+    int piatti_oggi      = (stats->piatti_primi_totali + stats->piatti_secondi_totali
+                            + stats->piatti_coffee_totali)  - stats->snapshot_piatti_totali;
+    long att_primi_oggi  = stats->attesa_totale_primi       - stats->snapshot_attesa_primi;
+    long att_sec_oggi    = stats->attesa_totale_secondi     - stats->snapshot_attesa_secondi;
+    long att_cof_oggi    = stats->attesa_totale_coffee      - stats->snapshot_attesa_coffee;
+    long att_cas_oggi    = stats->attesa_totale_cassa       - stats->snapshot_attesa_cassa;
+    long att_tot_oggi    = stats->attesa_totale_complessiva - stats->snapshot_attesa_complessiva;
+    int ricavo_oggi      = stats->ricavo_totale             - stats->snapshot_ricavo;
+    int pause_oggi       = stats->pause_totali              - stats->snapshot_pause;
+
+    printf("[GIORNO %d] Utenti serviti: %d | Non serviti: %d\n",
+           giorno, serviti_oggi, non_serviti_oggi);
+    printf("[GIORNO %d] Piatti erogati: %d\n", giorno, piatti_oggi);
+    printf("[GIORNO %d] Attese (ms) — primi: %ld | secondi: %ld | coffee: %ld | cassa: %ld | tot: %ld\n",
+           giorno, att_primi_oggi, att_sec_oggi, att_cof_oggi, att_cas_oggi, att_tot_oggi);
+    printf("[GIORNO %d] Pause effettuate: %d | Ricavo: %d EUR\n",
+           giorno, pause_oggi, ricavo_oggi);
 }

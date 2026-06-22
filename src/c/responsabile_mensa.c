@@ -571,27 +571,28 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         //print_stats(stats);
         
 
-    }  
+    
     
     /* avanzi di fine giornata */
-{
-    int j;
-    sem_p(sem_id, SEM_MUTEX_STATS);
-    for (j = 0; j < n_primi_menu; j++)
-        stats->avanzi_primi_totali += stats->porzioni_primi[j];
-    for (j = 0; j < n_secondi_menu; j++)
-        stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
-    sem_v(sem_id, SEM_MUTEX_STATS);
-}
-/* reset porzioni per giorno successivo */
-{
-    int p;
-    sem_p(sem_id, SEM_MUTEX_STATS);
-    for (p = 0; p < n_primi_menu; p++)
-        stats->porzioni_primi[p] = cfg.avg_refill_primi;
-    for (p = 0; p < n_secondi_menu; p++)
-        stats->porzioni_secondi[p] = cfg.avg_refill_secondi;
-    sem_v(sem_id, SEM_MUTEX_STATS);
+    {
+        int j;
+        sem_p(sem_id, SEM_MUTEX_STATS);
+        for (j = 0; j < n_primi_menu; j++)
+            stats->avanzi_primi_totali += stats->porzioni_primi[j];
+        for (j = 0; j < n_secondi_menu; j++)
+            stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
+        sem_v(sem_id, SEM_MUTEX_STATS);
+    }
+    /* reset porzioni per giorno successivo */
+    {
+        int p;
+        sem_p(sem_id, SEM_MUTEX_STATS);
+        for (p = 0; p < n_primi_menu; p++)
+            stats->porzioni_primi[p] = cfg.avg_refill_primi;
+        for (p = 0; p < n_secondi_menu; p++)
+            stats->porzioni_secondi[p] = cfg.avg_refill_secondi;
+        sem_v(sem_id, SEM_MUTEX_STATS);
+    }
 }
     
     // fine loop giornate

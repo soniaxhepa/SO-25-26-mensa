@@ -54,6 +54,14 @@ int main(int argc, char *argv[]) {
     else                                        staz_idx = 3;
 
 
+    /* compete per il posto alla stazione */
+    if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);
+    else if (strcmp(stazione, "SECONDI") == 0) sem_p(sem_id, SEM_STAZIONE_SECONDI);
+    else if (strcmp(stazione, "COFFEE") == 0)  sem_p(sem_id, SEM_STAZIONE_COFFEE);
+    else                                        sem_p(sem_id, SEM_STAZIONE_CASSA);
+    printf("[OPERATORE %s] posto acquisito\n", stazione);
+
+
     /* registra operatore come attivo */
     sem_p(sem_id, SEM_MUTEX_STATS);
     stats->operatori_attivi_per_stazione[staz_idx]++;
@@ -83,6 +91,13 @@ int main(int argc, char *argv[]) {
         else if (strcmp(stazione, "SECONDI") == 0) tipo_richiesta = MSG_REQ_SECONDI;
         else if (strcmp(stazione, "COFFEE") == 0)  tipo_richiesta = MSG_REQ_COFFEE;
         else                                       tipo_richiesta = MSG_REQ_CASSA;
+
+        /* se la cassa è bloccata dal communication disorder, aspetta */
+        if (strcmp(stazione, "CASSA") == 0 && stats->cassa_bloccata) {
+            struct timespec ts = {0, 10000000L};
+            nanosleep(&ts, NULL);
+            continue;
+        }
 
         if (msgrcv(msg_id, &msg, MSG_LEN, tipo_richiesta, IPC_NOWAIT) == -1) {
         if (errno == ENOMSG) {
@@ -171,6 +186,12 @@ int main(int argc, char *argv[]) {
         }   
         
     }
+
+    /* rilascia il posto alla stazione */
+    if (strcmp(stazione, "PRIMI") == 0)        sem_v(sem_id, SEM_STAZIONE_PRIMI);
+    else if (strcmp(stazione, "SECONDI") == 0) sem_v(sem_id, SEM_STAZIONE_SECONDI);
+    else if (strcmp(stazione, "COFFEE") == 0)  sem_v(sem_id, SEM_STAZIONE_COFFEE);
+    else                                        sem_v(sem_id, SEM_STAZIONE_CASSA);
     
     sem_p(sem_id, SEM_FINE_SIM);
 

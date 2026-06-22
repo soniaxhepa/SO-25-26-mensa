@@ -60,6 +60,12 @@ typedef struct {
     int snapshot_ricavo;
     int snapshot_pause;
 
+    int snapshot_piatti_primi;
+    int snapshot_piatti_secondi;
+    int snapshot_piatti_coffee;
+
+    int cassa_bloccata;
+
 } Stats;
 
 void init_stats(Stats *stats);

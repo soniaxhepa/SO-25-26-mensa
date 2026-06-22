@@ -2,12 +2,12 @@
 #include "responsabile_mensa.h"
 #include <signal.h>
 
-static int    g_shm_id         = -1;
-static int    g_sem_id         = -1;
-static int    g_msg_id         = -1;
-static Stats *g_stats          = NULL;
-static int    g_nof_workers    = 0;
-static int    g_n_gruppi       = 0;
+static int    g_shm_id = -1;
+static int    g_sem_id = -1;
+static int    g_msg_id = -1;
+static Stats *g_stats = NULL;
+static int    g_nof_workers = 0;
+static int    g_n_gruppi = 0;
 
 /*static int    g_n_utenti       = 0;
 static pid_t  g_pids_utenti[1024];

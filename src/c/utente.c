@@ -394,6 +394,30 @@ int main(int argc, char *argv[]) {
 
     printf("[UTENTE %d] Mensa aperta! (%d giorni)\n", id, cfg.sim_duration);
 
+
+    /* Nuovi utenti: loop indipendente senza toccare SEM_INIZIO/FINE_GIORNATA */
+if (nuovo) {
+    for (giorno = stats->num_giorno; giorno <= cfg.sim_duration; giorno++) {
+        /* aspetta che il responsabile apra questa giornata (polling) */
+        while (stats->num_giorno < giorno && !stats->simulazione_terminata) {
+            struct timespec tw = {0, 10000000L};
+            nanosleep(&tw, NULL);
+        }
+        if (stats->simulazione_terminata) break;
+        int servito = simula_giornata(id, sem_id, msg_id, stats, &cfg, &menu,
+                                      giorno, ha_ticket, group_id, group_size);
+        if (servito)
+            stat_add_int(sem_id, &stats->utenti_serviti_totali, 1);
+        else
+            stat_add_int(sem_id, &stats->utenti_non_serviti_totali, 1);
+        /* NON segnalare SEM_FINE_GIORNATA: il responsabile conta solo gli originali */
+    }
+    printf("[UTENTE %d] Fine simulazione\n", id);
+    shmdt(stats);
+    return 0;
+}
+
+
     // Loop giornate 
     for (giorno = 1; giorno <= cfg.sim_duration; giorno++) {
 

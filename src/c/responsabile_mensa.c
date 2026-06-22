@@ -604,6 +604,14 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     
     // fine loop giornate
 
+    {
+        struct sembuf sv;
+        int u;
+        sv.sem_num = SEM_INIZIO_GIORNATA; sv.sem_op = 1; sv.sem_flg = 0;
+        for (u = 0; u < (int)cfg.nof_users; u++)
+            semop(sem_id, &sv, 1);
+    }
+
     /* Fine simulazione: segnala causa TERM_TIMEOUT nella shm.
        Se era già stata impostata (overload), non la sovrascrive. */
     segnala_fine_simulazione(sem_id, stats, TERM_TIMEOUT);

@@ -439,7 +439,14 @@ int main(int argc, char *argv[]) {
         sem_p(sem_id, SEM_MUTEX_STATS);
         int terminata = stats->simulazione_terminata;
         sem_v(sem_id, SEM_MUTEX_STATS);
-        if (terminata) break;
+        
+        if (terminata) {
+            sops.sem_num = SEM_FINE_GIORNATA;
+            sops.sem_op  = 1;
+            sops.sem_flg = 0;
+            semop(sem_id, &sops, 1);
+            break;
+        }
 
         // Aspetta il via del responsabile 
         sops.sem_num = SEM_INIZIO_GIORNATA; sops.sem_op = -1; sops.sem_flg = 0;

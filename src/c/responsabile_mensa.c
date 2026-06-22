@@ -571,6 +571,13 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         //print_stats(stats);
         
 
+        sem_p(sem_id, SEM_MUTEX_STATS);
+        int terminata_dopo_giorno = stats->simulazione_terminata;
+        sem_v(sem_id, SEM_MUTEX_STATS);
+
+        if (terminata_dopo_giorno)
+        break;
+
     
     
     /* avanzi di fine giornata */

@@ -396,23 +396,37 @@ int main(int argc, char *argv[]) {
 
 
     /* Nuovi utenti: loop indipendente senza toccare SEM_INIZIO/FINE_GIORNATA */
-if (nuovo) {
-    for (giorno = stats->num_giorno; giorno <= cfg.sim_duration; giorno++) {
-        /* aspetta che il responsabile apra questa giornata (polling) */
-        while (stats->num_giorno < giorno && !stats->simulazione_terminata) {
-            struct timespec tw = {0, 10000000L};
-            nanosleep(&tw, NULL);
+    if (nuovo) {
+        int giorno_corrente;
+        int terminata;
+        int fine_giornata;
+        int servito;
+
+        sem_p(sem_id, SEM_MUTEX_STATS);
+        giorno_corrente = stats->num_giorno;
+        terminata       = stats->simulazione_terminata;
+        fine_giornata   = stats->fine_giornata;
+        sem_v(sem_id, SEM_MUTEX_STATS);
+
+        if (terminata || fine_giornata || giorno_corrente <= 0 ||
+            giorno_corrente > cfg.sim_duration) {
+            printf("[UTENTE %d] Nuovo utente: mensa non disponibile, esco\n", id);
+            shmdt(stats);
+            return 0;
         }
-        if (stats->simulazione_terminata) break;
-        int servito = simula_giornata(id, sem_id, msg_id, stats, &cfg, &menu,
-                                      giorno, ha_ticket, group_id, group_size);
-        if (servito)
-            stat_add_int(sem_id, &stats->utenti_serviti_totali, 1);
-        else
-            stat_add_int(sem_id, &stats->utenti_non_serviti_totali, 1);
-        /* NON segnalare SEM_FINE_GIORNATA: il responsabile conta solo gli originali */
-    }
-    printf("[UTENTE %d] Fine simulazione\n", id);
+
+    printf("[UTENTE %d] Nuovo utente aggiunto nel giorno %d\n",
+           id, giorno_corrente);
+
+    servito = simula_giornata(id, sem_id, msg_id, stats, &cfg, &menu,
+                              giorno_corrente, ha_ticket, group_id, group_size);
+
+    if (servito)
+        stat_add_int(sem_id, &stats->utenti_serviti_totali, 1);
+    else
+        stat_add_int(sem_id, &stats->utenti_non_serviti_totali, 1);
+
+    printf("[UTENTE %d] Nuovo utente terminato\n", id);
     shmdt(stats);
     return 0;
 }

@@ -51,6 +51,15 @@ typedef struct {
     int snapshot_utenti_serviti;
     int snapshot_piatti_totali;
 
+    int snapshot_utenti_non_serviti;
+    long snapshot_attesa_primi;
+    long snapshot_attesa_secondi;
+    long snapshot_attesa_coffee;
+    long snapshot_attesa_cassa;
+    long snapshot_attesa_complessiva;
+    int snapshot_ricavo;
+    int snapshot_pause;
+
 } Stats;
 
 void init_stats(Stats *stats);

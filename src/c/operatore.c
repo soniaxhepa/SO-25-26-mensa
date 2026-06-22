@@ -62,7 +62,6 @@ int main(int argc, char *argv[]) {
 
     int pause_oggi = 0;
     int era_fine_giornata = 0;
-    int clienti_serviti = 0;
 
     while (!stats->simulazione_terminata){
         if (stats->fine_giornata) {
@@ -119,17 +118,24 @@ int main(int argc, char *argv[]) {
         /* manda risposta all'utente */
         ReqPayload req;
         memcpy(&req, msg.mtext, sizeof(ReqPayload));
+
+        if (strcmp(stazione, "CASSA") == 0) {
+            sem_p(sem_id, SEM_MUTEX_STATS);
+            stats->ricavo_totale += req.prezzo_cent;
+            sem_v(sem_id, SEM_MUTEX_STATS);
+        }
+
         risposta.mtype = (long)req.pid;
         memcpy(risposta.mtext, &res, sizeof(ResPayload));
         msgsnd(msg_id, &risposta, MSG_LEN, 0);
 
-        clienti_serviti++;
 
 
         /* logica pausa */
         int posso_pausare = 0;
-        if (clienti_serviti % 5 == 0 && pause_oggi < cfg.nof_pause) {
+        if ((rand() % 100) < 20 && pause_oggi < cfg.nof_pause) {
             sem_p(sem_id, SEM_MUTEX_STATS);
+            
             if (stats->operatori_attivi_per_stazione[staz_idx] > 1) {
                 stats->operatori_attivi_per_stazione[staz_idx]--;
                 posso_pausare = 1;
@@ -144,8 +150,11 @@ int main(int argc, char *argv[]) {
             else                                        sem_v(sem_id, SEM_STAZIONE_CASSA);
 
             struct timespec tp;
-            tp.tv_sec  = ((long)cfg.nof_pause * cfg.n_nano_secs) / 1000000000L;
-            tp.tv_nsec = ((long)cfg.nof_pause * cfg.n_nano_secs) % 1000000000L;
+
+            int durata_pausa = 1 + rand() % 3; 
+
+            tp.tv_sec  = ((long)durata_pausa * cfg.n_nano_secs) / 1000000000L;
+            tp.tv_nsec = ((long)durata_pausa * cfg.n_nano_secs) % 1000000000L;
             nanosleep(&tp, NULL);
 
             if (strcmp(stazione, "PRIMI") == 0)        sem_p(sem_id, SEM_STAZIONE_PRIMI);

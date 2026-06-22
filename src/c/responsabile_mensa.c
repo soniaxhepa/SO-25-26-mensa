@@ -571,7 +571,30 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         //print_stats(stats);
         
 
-    }  // fine loop giornate
+    }  
+    
+    /* avanzi di fine giornata */
+{
+    int j;
+    sem_p(sem_id, SEM_MUTEX_STATS);
+    for (j = 0; j < n_primi_menu; j++)
+        stats->avanzi_primi_totali += stats->porzioni_primi[j];
+    for (j = 0; j < n_secondi_menu; j++)
+        stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
+    sem_v(sem_id, SEM_MUTEX_STATS);
+}
+/* reset porzioni per giorno successivo */
+{
+    int p;
+    sem_p(sem_id, SEM_MUTEX_STATS);
+    for (p = 0; p < n_primi_menu; p++)
+        stats->porzioni_primi[p] = cfg.avg_refill_primi;
+    for (p = 0; p < n_secondi_menu; p++)
+        stats->porzioni_secondi[p] = cfg.avg_refill_secondi;
+    sem_v(sem_id, SEM_MUTEX_STATS);
+}
+    
+    // fine loop giornate
 
     /* Fine simulazione: segnala causa TERM_TIMEOUT nella shm.
        Se era già stata impostata (overload), non la sovrascrive. */
@@ -594,19 +617,7 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     // Aspetta terminazione di tutti i processi figli
     aspetta_figli();
 
-    // Conta porzioni avanzate a fine simulazione
-    {
-        int j;
-        struct sembuf s;
-        s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
-        s.sem_op  = -1; semop(sem_id, &s, 1);
-        for (j = 0; j < n_primi_menu; j++)
-            stats->avanzi_primi_totali += stats->porzioni_primi[j];
-        for (j = 0; j < n_secondi_menu; j++)
-            stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
-        s.sem_op = 1; semop(sem_id, &s, 1);
-    }
-
+    
 
     // Stampa report finale e salva statistiche su CSV
     print_stats(stats);

@@ -220,6 +220,8 @@ static int simula_giornata(int id, int sem_id, int msg_id, Stats *stats,
             }
         }
         clock_gettime(CLOCK_MONOTONIC, &t_fine);
+
+        
         attesa_ms = (t_fine.tv_sec  - t_inizio.tv_sec)  * 1000L
                   + (t_fine.tv_nsec - t_inizio.tv_nsec) / 1000000L;
 
@@ -311,7 +313,6 @@ static int simula_giornata(int id, int sem_id, int msg_id, Stats *stats,
     attesa_ms = (t_fine.tv_sec  - t_inizio.tv_sec)  * 1000L
               + (t_fine.tv_nsec - t_inizio.tv_nsec) / 1000000L;
     printf("[UTENTE %d] Cassa: pago %d, atteso %ld ms\n", id, costo, attesa_ms);
-    stat_add_int (sem_id, &stats->ricavo_totale,             costo);
     stat_add_long(sem_id, &stats->attesa_totale_cassa,       attesa_ms);
     stat_add_long(sem_id, &stats->attesa_totale_complessiva, attesa_ms);
 

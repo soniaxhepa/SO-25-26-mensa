@@ -8,9 +8,10 @@ static int    g_msg_id         = -1;
 static Stats *g_stats          = NULL;
 static int    g_nof_workers    = 0;
 static int    g_n_gruppi       = 0;
-static int    g_n_utenti       = 0;
+
+/*static int    g_n_utenti       = 0;
 static pid_t  g_pids_utenti[1024];
-static pid_t  g_pids_operatori[64];
+static pid_t  g_pids_operatori[64];*/
 
 // handle signal: gestisce i segnali SIGINT e SIGTERM
 static void handle_signal(int sig) {
@@ -109,7 +110,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
     }
     stats->n_gruppi = g;
     g_n_gruppi      = g;
-    g_n_utenti      = n_utenti;
+    //g_n_utenti      = n_utenti;
 
     // fork() + execve() per ogni utente
     for (i = 0; i < n_utenti; i++) {
@@ -138,7 +139,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
                 _exit(EXIT_FAILURE);
             }
             default:
-                g_pids_utenti[i] = pid;
+                // g_pids_utenti[i] = pid;
                 break;
         }
     }
@@ -194,7 +195,7 @@ static int crea_operatori_exec(int n_operatori, const char *config_file, const c
                 _exit(EXIT_FAILURE);
             }
             default:
-                g_pids_operatori[i] = pid;
+                // g_pids_operatori[i] = pid;
                 break;
         }
     }
@@ -239,6 +240,7 @@ static void aspetta_figli(void) {
         }
     }
 }
+
 
 // SEGNALA FINE SIMULAZIONE
 static void segnala_fine_simulazione(int sem_id, Stats *stats, int causa) {
@@ -297,6 +299,20 @@ static void cleanup_ipc(Stats *stats, int shm_id, int sem_id, int msg_id) {
     if (msg_id != -1)                  msgctl(msg_id, IPC_RMID, NULL);
 }
 
+//contiamo quanti piatti ci sono
+static int conta_voci_menu(const char *filename, const char *tipo) {
+    FILE *f = fopen(filename, "r");
+    char line[256], t[64], n[64];
+    int count = 0;
+    if (!f) return 2;
+    while (fgets(line, sizeof(line), f)) {
+        if (sscanf(line, "%63s %63s", t, n) == 2 && strcmp(t, tipo) == 0)
+            count++;
+    }
+    fclose(f);
+    return count > 0 ? count : 2;
+}
+
 // AVVIA RESPONSABILE MENSA
 int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     Config           cfg;
@@ -312,6 +328,9 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     }
     g_nof_workers = cfg.nof_workers;
 
+    int n_primi_menu   = conta_voci_menu(menu_file, "PRIMO");
+    int n_secondi_menu = conta_voci_menu(menu_file, "SECONDO");
+
     // registrazione dell'handler per terminazione con SIGINT e SIGTERM
     {
         struct sigaction sa;
@@ -323,12 +342,6 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         }
         if (sigaction(SIGTERM, &sa, NULL) == -1) {
             perror("[RESPONSABILE MENSA] Errore sigaction SIGTERM");
-            return -1;
-        }
-        // SIGUSR2 ignorato dal responsabile: lo mandiamo noi ai figli, non vogliamo riceverlo
-        sa.sa_handler = SIG_IGN;
-        if (sigaction(SIGUSR2, &sa, NULL) == -1) {
-            perror("[RESPONSABILE MENSA] Errore sigaction SIGUSR2");
             return -1;
         }
     }
@@ -361,10 +374,10 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     init_stats(stats);
 
     // inizializzazione porzioni
-    for (i = 0; i < MAX_MENU_ITEMS; i++) {
-        stats->porzioni_primi[i]   = cfg.avg_refill_primi;
+    for (i = 0; i < n_primi_menu; i++)
+        stats->porzioni_primi[i] = cfg.avg_refill_primi;
+    for (i = 0; i < n_secondi_menu; i++)
         stats->porzioni_secondi[i] = cfg.avg_refill_secondi;
-    }
 
     // Inizializzazione semafori
     arg.val = 1;
@@ -498,7 +511,6 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     for (giorno = 1; giorno <= cfg.sim_duration; giorno++) {
         struct sembuf s;
         union semun   r;
-        int k;
 
         // Controllo overload: se qualcuno ha già impostato terminata, usciamo
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
@@ -518,6 +530,7 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         stats->fine_giornata = 0;
         s.sem_op =  1; semop(sem_id, &s, 1);
 
+
         // Sblocco utenti a inizio giornata
         {
             int u; struct sembuf sv;
@@ -532,13 +545,12 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         ts.tv_nsec = ns_totali % 1000000000L;
         nanosleep(&ts, NULL);
 
-        // Setto fine_giornata e mando SIGUSR2 ai figli per svegliarli da chiamate bloccanti
+        // Setto fine_giornata: i figli la controllano nel loro polling loop
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
         s.sem_op  = -1; semop(sem_id, &s, 1);
         stats->fine_giornata = 1;
         s.sem_op  =  1; semop(sem_id, &s, 1);
-        for (k = 0; k < g_n_utenti;    k++) kill(g_pids_utenti[k],    SIGUSR2);
-        for (k = 0; k < g_nof_workers; k++) kill(g_pids_operatori[k], SIGUSR2);
+        
 
         // fine giornata: sblocco utenti bloccati alla barriera di gruppo
         sblocca_gruppi_incompleti(sem_id, stats);
@@ -554,8 +566,10 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         semctl(sem_id, SEM_FINE_GIORNATA, SETVAL, r);
 
         printf("\n========== STATISTICHE FINE GIORNATA %d ==========\n", giorno);
-        print_stats_giornata(stats, giorno);  // da implementare
-        print_stats(stats);
+        print_stats_giornata(stats, giorno);  
+        printf("==================================================\n\n");
+        //print_stats(stats);
+        
 
     }  // fine loop giornate
 
@@ -586,12 +600,13 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
         struct sembuf s;
         s.sem_num = SEM_MUTEX_STATS; s.sem_flg = 0;
         s.sem_op  = -1; semop(sem_id, &s, 1);
-        for (j = 0; j < MAX_MENU_ITEMS; j++) {
-            stats->avanzi_primi_totali   += stats->porzioni_primi[j];
+        for (j = 0; j < n_primi_menu; j++)
+            stats->avanzi_primi_totali += stats->porzioni_primi[j];
+        for (j = 0; j < n_secondi_menu; j++)
             stats->avanzi_secondi_totali += stats->porzioni_secondi[j];
-        }
         s.sem_op = 1; semop(sem_id, &s, 1);
     }
+
 
     // Stampa report finale e salva statistiche su CSV
     print_stats(stats);
@@ -606,7 +621,7 @@ int avvia_responsabile_mensa(const char *config_file, const char *menu_file) {
     g_shm_id = -1;
     g_sem_id = -1;
 
-    if (msgctl(msg_id, IPC_RMID, NULL) == -1)
+    if (msgctl(msg_id, IPC_RMID, NULL) == -1 && errno != EINVAL)
         perror("[RESPONSABILE MENSA] Errore msgctl IPC_RMID");
     g_msg_id = -1;
 

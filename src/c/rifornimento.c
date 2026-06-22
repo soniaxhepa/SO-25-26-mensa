@@ -49,23 +49,37 @@ int main(int argc, char *argv[]) {
         if (stats->simulazione_terminata) break;
         continue;
     }
+
+    if (stats->fine_giornata) {
+    struct timespec attesa = {0, 10000000L};
+    nanosleep(&attesa, NULL);
+    continue;
+}
     
     if (stats->simulazione_terminata) break;
     
     sem_p(sem_id, SEM_MUTEX_STATS);
     
-    // ricarica primi
-    int i;
+    // ricarica primi e seocndi
+   int i;
+
     for (i = 0; i < MAX_MENU_ITEMS; i++) {
-        if (stats->porzioni_primi[i] < cfg.max_porzioni_primi)
-            stats->porzioni_primi[i] = cfg.max_porzioni_primi;
+        if (stats->porzioni_primi[i] < cfg.max_porzioni_primi) {
+            stats->porzioni_primi[i] += cfg.avg_refill_primi;
+
+            if (stats->porzioni_primi[i] > cfg.max_porzioni_primi)
+                stats->porzioni_primi[i] = cfg.max_porzioni_primi;
         }
-    // ricarica secondi
+    }
+
     for (i = 0; i < MAX_MENU_ITEMS; i++) {
-        if (stats->porzioni_secondi[i] < cfg.max_porzioni_secondi)
-            stats->porzioni_secondi[i] = cfg.max_porzioni_secondi;
+        if (stats->porzioni_secondi[i] < cfg.max_porzioni_secondi) {
+            stats->porzioni_secondi[i] += cfg.avg_refill_secondi;
+
+            if (stats->porzioni_secondi[i] > cfg.max_porzioni_secondi)
+                stats->porzioni_secondi[i] = cfg.max_porzioni_secondi;
         }
-    
+    }
     sem_v(sem_id, SEM_MUTEX_STATS);
     printf("[RIFORNIMENTO] Porzioni ricaricate\n");
     }

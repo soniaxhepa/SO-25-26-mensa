@@ -1,0 +1,17 @@
+campo,valore
+utenti_serviti,53
+utenti_non_serviti,37
+piatti_primi,61
+piatti_secondi,63
+piatti_coffee,27
+avanzi_primi,375
+avanzi_secondi,354
+avanzi_coffee,0
+attesa_primi,125181
+attesa_secondi,136884
+attesa_coffee,6374
+attesa_cassa,8852
+attesa_totale,277291
+operatori_attivi,4
+pause_totali,0
+ricavo_totale,654

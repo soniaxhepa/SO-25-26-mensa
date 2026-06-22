@@ -77,10 +77,18 @@ void salva_stats_csv(const Stats *stats, const char *filename) {
 
 void scatta_snapshot(Stats *stats) {
     if (stats == NULL) return;
-    stats->snapshot_utenti_serviti = stats->utenti_serviti_totali;
-    stats->snapshot_piatti_totali  = stats->piatti_primi_totali
-                                   + stats->piatti_secondi_totali
-                                   + stats->piatti_coffee_totali;
+    stats->snapshot_utenti_serviti      = stats->utenti_serviti_totali;
+    stats->snapshot_utenti_non_serviti  = stats->utenti_non_serviti_totali;
+    stats->snapshot_piatti_totali       = stats->piatti_primi_totali
+                                        + stats->piatti_secondi_totali
+                                        + stats->piatti_coffee_totali;
+    stats->snapshot_attesa_primi        = stats->attesa_totale_primi;
+    stats->snapshot_attesa_secondi      = stats->attesa_totale_secondi;
+    stats->snapshot_attesa_coffee       = stats->attesa_totale_coffee;
+    stats->snapshot_attesa_cassa        = stats->attesa_totale_cassa;
+    stats->snapshot_attesa_complessiva  = stats->attesa_totale_complessiva;
+    stats->snapshot_ricavo              = stats->ricavo_totale;
+    stats->snapshot_pause               = stats->pause_totali;
 }
 
 void print_stats_giornata(Stats *stats, int giorno) {

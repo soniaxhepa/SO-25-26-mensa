@@ -129,7 +129,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
                     (char *)config_file,
                     (char *)menu_file,
                     "0",  // barriera iniziale: da implementare
-                    (i >= (n_utenti * 8 / 10)) ? "1" : "0",
+                    (i < (n_utenti * 8 / 10)) ? "1" : "0",
                     gid_str,
                     gsz_str,
                     NULL

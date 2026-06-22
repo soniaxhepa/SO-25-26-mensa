@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
                 shmdt(stats);
                 return 1;
             case 0:
+                setsid();   /* distacca dal terminale controllante */
                 execve("./utente", args, NULL);
                 perror("[AGGIUNGI_UTENTI] Errore execve");
                 _exit(EXIT_FAILURE);

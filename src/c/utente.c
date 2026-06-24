@@ -435,23 +435,20 @@ int main(int argc, char *argv[]) {
     // Loop giornate 
     for (giorno = 1; giorno <= cfg.sim_duration; giorno++) {
 
-        // Controlla overload prima di iniziare la giornata 
-        sem_p(sem_id, SEM_MUTEX_STATS);
-        int terminata = stats->simulazione_terminata;
-        sem_v(sem_id, SEM_MUTEX_STATS);
-        
-        if (terminata) {
-            sops.sem_num = SEM_FINE_GIORNATA;
-            sops.sem_op  = 1;
-            sops.sem_flg = 0;
-            semop(sem_id, &sops, 1);
-            break;
-        }
+    // Aspetta il via del responsabile
+    sops.sem_num = SEM_INIZIO_GIORNATA; sops.sem_op = -1; sops.sem_flg = 0;
+    semop(sem_id, &sops, 1);
 
-        // Aspetta il via del responsabile 
-        sops.sem_num = SEM_INIZIO_GIORNATA; sops.sem_op = -1; sops.sem_flg = 0;
-        semop(sem_id, &sops, 1);
-        printf("[UTENTE %d] === Giorno %d ===\n", id, giorno);
+    // Controlla overload DOPO essersi svegliato
+    sem_p(sem_id, SEM_MUTEX_STATS);
+    int terminata = stats->simulazione_terminata;
+    sem_v(sem_id, SEM_MUTEX_STATS);
+
+    if (terminata) {
+        break;   // nessun sem_v qui: non segnalare fine giornata
+    }
+
+    printf("[UTENTE %d] === Giorno %d ===\n", id, giorno);
         
         // Controlla se la giornata è già conclusa 
         sem_p(sem_id, SEM_MUTEX_STATS);

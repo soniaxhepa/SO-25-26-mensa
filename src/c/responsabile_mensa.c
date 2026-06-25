@@ -100,7 +100,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
                 size = n_utenti - i;
         }
         for (j = 0; j < size; j++) {
-            group_id[i + j]       = g;
+            group_id[i + j] = g;
             group_size_arr[i + j] = size;
         }
         stats->gruppi_size[g]   = size;
@@ -109,7 +109,7 @@ static int crea_utenti_exec(int n_utenti, const char *config_file, const char *m
         g++;
     }
     stats->n_gruppi = g;
-    g_n_gruppi      = g;
+    g_n_gruppi = g;
     //g_n_utenti      = n_utenti;
 
     // fork() + execve() per ogni utente
